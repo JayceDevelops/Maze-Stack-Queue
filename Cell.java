@@ -21,6 +21,10 @@ public class Cell {
         this.wall = isWall;
     }
 
+    public final void setVisited(boolean visit){
+        this.visited = true;
+    }
+
     /**
      * 
      * @returns a Set type, that contains the coordinates the cell is located at
