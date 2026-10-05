@@ -1,4 +1,6 @@
+import java.util.Random;
 import java.util.Stack;
+import java.util.Set;
 
 public class Maze {
 
@@ -7,7 +9,9 @@ public class Maze {
     private int[] start, end;
 
     public Maze(){
-        generateGrid(5, 5);
+        maze = generateGrid(10, 10);
+        start = generateCoordniates();
+        end = generateCoordniates();
     }
 
     private Cell[][] generateGrid(int rows, int cols){
@@ -24,7 +28,7 @@ public class Maze {
                 else {
                     double random = Math.random();
 
-                    if (random > 0.5){
+                    if (random < 0.5){
                         newCell.setIsWall(true);
                     }
                 }
@@ -35,5 +39,36 @@ public class Maze {
         }
 
         return grid;
+    }
+
+    private int[] generateCoordniates(){
+        Random rand = new Random();
+        return new int[] {rand.nextInt(10 - 2) + 1, rand.nextInt(10 - 2) + 1};
+    }
+
+    @Override 
+    public String toString(){
+
+        String output = "";
+        for (int row = 0; row < maze.length; row++) {
+            for (int col = 0; col < maze[0].length; col++) {
+            
+                if (start[0] == row && start[1] == col){
+                    output += "S";
+                }
+                else if (end[0] == row && end[1] == col){
+                    output += "E";
+                }
+                else if (maze[row][col].isWall()) {
+                    output += "W";
+                }
+                else {
+                    output += " ";
+                }
+            }
+            output += '\n';
+        }
+
+        return output;
     }
 }
