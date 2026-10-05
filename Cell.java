@@ -1,5 +1,3 @@
-import java.util.Set;
-
 public class Cell {
     private int row, column, distance;
     private boolean wall, visited;
@@ -27,8 +25,8 @@ public class Cell {
      * 
      * @returns a Set type, that contains the coordinates the cell is located at
      */
-    public Set getCoordinates(){
-        return Set.of(this.row, this.column);
+    public int[] getCoordinates(){
+        return new int[] {this.row, this.column};
     }
 
     /**

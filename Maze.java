@@ -1,19 +1,26 @@
 import java.util.Random;
 import java.util.Stack;
-import java.util.Set;
 
 public class Maze {
 
-    private Cell[][] maze;
+    private final int ROWS = 10;
+    private final int COLS = 20;
+    private final Cell[][] maze;
     private Stack coordinates;
-    private int[] start, end;
+    private final int[] start, end;
 
     public Maze(){
-        maze = generateGrid(10, 10);
+        maze = generateGrid(ROWS, COLS);
         start = generateCoordniates();
         end = generateCoordniates();
     }
 
+    /**
+     * 
+     * @param rows
+     * @param cols
+     * @return: 2d Array representing the maze, has walls around the border and walls with in the array
+     */
     private Cell[][] generateGrid(int rows, int cols){
         Cell[][] grid = new Cell[rows][cols];
 
@@ -34,16 +41,19 @@ public class Maze {
                 }
 
                 grid[row][col] = newCell;
-                System.out.println(newCell);
             }
         }
 
         return grid;
     }
 
+    /**
+     * 
+     * @return: Random int array with two coordinates within the 2d array
+     */
     private int[] generateCoordniates(){
         Random rand = new Random();
-        return new int[] {rand.nextInt(10 - 2) + 1, rand.nextInt(10 - 2) + 1};
+        return new int[] {rand.nextInt(ROWS - 2) + 1, rand.nextInt(COLS - 2) + 1};
     }
 
     @Override 
