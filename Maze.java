@@ -1,4 +1,3 @@
-import java.util.Queue;
 import java.util.Random;
 import java.util.Stack;
 
@@ -8,8 +7,6 @@ public class Maze {
     private final int COLS = 50;
     private final Cell[][] maze;
     private final int[] start, end;
-
-    private Queue<Cell> path;
 
     private Stack<Cell> coordinates;
 
@@ -26,21 +23,7 @@ public class Maze {
         maze[start[0]][start[1] - 1].setDistance(1);
         maze[start[0]][start[1] - 1].setDistance(1);
 
-        path = solveMaze();
-
-        String output = "Start: ";
-        if (path != null){
-            for (int i = 1; i <= path.size(); i++){
-                int[] location = path.poll().getCoordinates();
-
-                output += "(" + location[0] + ", " + location[1] + ") -> ";
-            }
-        }
-        else {
-            output = "No Path.";
-        }
-
-        System.out.println(output);
+        solveMaze();
     }
 
     /**
@@ -84,7 +67,7 @@ public class Maze {
         return new int[] {rand.nextInt(ROWS - 2) + 1, rand.nextInt(COLS - 2) + 1};
     }
 
-    private Queue<Cell> solveMaze(){
+    private void solveMaze(){
             
         while (!coordinates.isEmpty()){
 
@@ -93,18 +76,6 @@ public class Maze {
 
             int[] cellCords = current.getCoordinates();
 
-            if (current.getCoordinates() == end){
-                return path;
-            }
-
-            if (current.getDistance() == 1 && cellCords[0] != start[0] && cellCords[1] != start[1]){
-                path.clear();
-                path.add(maze[start[0]][start[1]]);
-                path.add(current);
-            }
-            else {
-                path.add(current);
-            }
 
             Cell north = maze[cellCords[0] - 1][cellCords[1]];
             Cell east = maze[cellCords[0]][cellCords[1] + 1];
@@ -127,10 +98,6 @@ public class Maze {
                 coordinates.push(west);
             }
         }
-
-
-        path = null;
-        return path;
     }
 
     @Override 
