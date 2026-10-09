@@ -4,24 +4,20 @@ import java.util.Stack;
 public class Maze {
 
     private final int ROWS = 10;
-    private final int COLS = 50;
+    private final int COLS = 10;
     private final Cell[][] maze;
-    private final int[] start, end;
+    private int[] start, end = new int[2];
+    private int distance;
 
-    private Stack<Cell> coordinates;
+    private Stack<Cell> coordinates = new Stack<>();
 
     public Maze(){
         maze = generateGrid(ROWS, COLS);
         start = generateCoordniates();
         end = generateCoordniates();
+        distance = 0;
 
         coordinates.push(maze[start[0]][start[1]]);
-
-        // Sets the surrounding cells distance to 1
-        maze[start[0] - 1][start[1]].setDistance(1);
-        maze[start[0]][start[1] + 1].setDistance(1);
-        maze[start[0]][start[1] - 1].setDistance(1);
-        maze[start[0]][start[1] - 1].setDistance(1);
 
         solveMaze();
     }
@@ -42,6 +38,9 @@ public class Maze {
 
                 if (row == 0 || col == 0 || row == rows - 1 || col == cols - 1){
                     newCell.setIsWall(true);
+                }
+                else if (row == end[0] && col == end[1]){
+                    newCell.setIsWall(false);
                 }
                 else {
                     double random = Math.random();
@@ -67,37 +66,120 @@ public class Maze {
         return new int[] {rand.nextInt(ROWS - 2) + 1, rand.nextInt(COLS - 2) + 1};
     }
 
-    private void solveMaze(){
-            
+    private Stack<Cell> solveMaze(){
+        
         while (!coordinates.isEmpty()){
 
             Cell current = coordinates.pop();
+
+            if (current.getCoordinates()[0] == end[0] && current.getCoordinates()[1] == end[1]){
+                System.out.println("Solved.");
+                return backtrack();
+            }
+
             current.setVisited(true);
+            distance++;
 
             int[] cellCords = current.getCoordinates();
 
+            Cell north = maze[cellCords[0] - 1][cellCords[1]];
+            Cell east = maze[cellCords[0]][cellCords[1] + 1];
+            Cell south = maze[cellCords[0]][cellCords[1] + 1];
+            Cell west = maze[cellCords[0]][cellCords[1] - 1];
+
+            if (!north.isWall() && !north.wasVisited()){
+
+                if(north.getCoordinates()[0] == end[0] && north.getCoordinates()[1] == end[1]){
+                    System.out.println("Solved");
+                    return backtrack();
+                }
+
+                coordinates.push(north);
+                System.out.println("North: " + north.getCoordinates()[0] + ", " + north.getCoordinates()[1]);
+                north.setDistance(distance);
+            }
+
+            if (!east.isWall() && !east.wasVisited()){
+
+                if(east.getCoordinates()[0] == end[0] && east.getCoordinates()[1] == end[1]){
+                    System.out.println("Solved");
+                    return backtrack();
+                }
+
+                coordinates.push(east);
+                System.out.println("East: " + east.getCoordinates()[0] + ", " + east.getCoordinates()[1]);
+                east.setDistance(distance);
+            }
+
+            if (!south.isWall() && !south.wasVisited()){
+
+                if(south.getCoordinates()[0] == end[0] && south.getCoordinates()[1] == end[1]){
+                    System.out.println("Solved");
+                    return backtrack();
+                }
+
+                coordinates.push(south);
+                System.out.println("South: " + south.getCoordinates()[0] + ", " + south.getCoordinates()[1]);
+                south.setDistance(distance);
+            }
+
+            if (!west.isWall() && !west.wasVisited()){
+
+                if(west.getCoordinates()[0] == end[0] && west.getCoordinates()[1] == end[1]){
+                    System.out.println("Solved");
+                    return backtrack();
+                }
+
+                coordinates.push(west);
+                System.out.println("West: " + west.getCoordinates()[0] + ", " + west.getCoordinates()[1]);
+                west.setDistance(distance);
+            }
+
+            System.out.println(coordinates);
+        }
+
+        return new Stack<>();
+    }
+
+    private Stack<Cell> backtrack(){
+
+        Stack<Cell> coords = new Stack<>();
+        Cell current = maze[end[0]][end[1]];
+        coords.push(current);
+
+        while(current.getCoordinates()[0] != start[0] && current.getCoordinates()[1] != start[1]){
+
+            int[] cellCords = current.getCoordinates();
 
             Cell north = maze[cellCords[0] - 1][cellCords[1]];
             Cell east = maze[cellCords[0]][cellCords[1] + 1];
             Cell south = maze[cellCords[0]][cellCords[1] - 1];
             Cell west = maze[cellCords[0]][cellCords[1] - 1];
 
-            if (!north.isWall() && !north.wasVisited()){
-                coordinates.push(north);
+            Cell lowest = null;
+            lowest.setDistance(0);
+
+            if (lowest.getDistance() > north.getDistance() && !north.isWall()){
+                lowest = north;
             }
 
-            if (!east.isWall() && !east.wasVisited()){
-                coordinates.push(east);
+            if (lowest.getDistance() > east.getDistance() && !east.isWall()){
+                lowest = east;
             }
 
-            if (!south.isWall() && !south.wasVisited()){
-                coordinates.push(south);
+            if (lowest.getDistance() > south.getDistance() && !south.isWall()){
+                lowest = south;
             }
 
-            if (!west.isWall() && !west.wasVisited()){
-                coordinates.push(west);
+            if (lowest.getDistance() > west.getDistance() && !west.isWall()){
+                lowest = west;
             }
+
+            coords.push(lowest);
+            current = coords.peek();
         }
+
+        return coords;
     }
 
     @Override 
@@ -117,7 +199,7 @@ public class Maze {
                     output += "W";
                 }
                 else {
-                    output += " ";
+                    output += "X";
                 }
             }
             output += '\n';
