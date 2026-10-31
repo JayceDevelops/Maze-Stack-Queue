@@ -1,210 +1,188 @@
-import java.util.Random;
-import java.util.Stack;
+import java.util.*;
 
 public class Maze {
 
-    private final int ROWS = 10;
-    private final int COLS = 10;
+    /* Colors used to print maze */
+    private static final String RESET  = "\u001B[0m";
+    private static final String GREEN  = "\u001B[32m";
+    private static final String RED    = "\u001B[31m";
+    private static final String YELLOW = "\u001B[33m";
+    private static final String GRAY   = "\u001B[90m";
+
+    private final int ROWS = 25;
+    private final int COLS = 25;
     private final Cell[][] maze;
-    private int[] start, end = new int[2];
-    private int distance;
+    private int[] start, end;
+    private Cell[][] parent;
+    private Stack<Cell> path;
 
-    private Stack<Cell> coordinates = new Stack<>();
-
-    public Maze(){
+    public Maze(String type) {
+        start = generateCoordinates();
+        
+        do {
+            end = generateCoordinates();
+        } while (Arrays.equals(start, end));
+        
         maze = generateGrid(ROWS, COLS);
-        start = generateCoordniates();
-        end = generateCoordniates();
-        distance = 0;
-
-        coordinates.push(maze[start[0]][start[1]]);
-
-        solveMaze();
     }
 
-    /**
-     * 
-     * @param rows
-     * @param cols
-     * @return: 2d Array representing the maze, has walls around the border and walls with in the array
-     */
-    private Cell[][] generateGrid(int rows, int cols){
+    /* Creates a 2D randomized maze for "Robot" to solve. NOTE: MAZE IS NOT ALWAYS SOLVEABLE */
+    private Cell[][] generateGrid(int rows, int cols) {
         Cell[][] grid = new Cell[rows][cols];
 
-        for (int row = 0; row < rows; row++){
-            for (int col = 0; col < cols; col++){
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
 
-                Cell newCell = new Cell(row, col, false, 0);
+                Cell cell = new Cell(row, col, false, 0);
+                boolean border = row == 0 || col == 0 || row == rows - 1 || col == cols - 1;
+                boolean isStartOrEnd = (row == start[0] && col == start[1]) || (row == end[0] && col == end[1]);
 
-                if (row == 0 || col == 0 || row == rows - 1 || col == cols - 1){
-                    newCell.setIsWall(true);
+                if (border) {
+                    cell.setIsWall(true);
+                } else if (!isStartOrEnd && Math.random() < 0.5) {
+                    cell.setIsWall(true);
                 }
-                else if (row == end[0] && col == end[1]){
-                    newCell.setIsWall(false);
-                }
-                else {
-                    double random = Math.random();
-
-                    if (random < 0.5){
-                        newCell.setIsWall(true);
-                    }
-                }
-
-                grid[row][col] = newCell;
+                grid[row][col] = cell;
             }
         }
-
         return grid;
     }
 
-    /**
-     * 
-     * @return: Random int array with two coordinates within the 2d array
-     */
-    private int[] generateCoordniates(){
+    /* Returns int array of two random coordinates on the maze. This method is used for the start and end coordinates. */
+    private int[] generateCoordinates() {
         Random rand = new Random();
-        return new int[] {rand.nextInt(ROWS - 2) + 1, rand.nextInt(COLS - 2) + 1};
+        return new int[] { rand.nextInt(ROWS - 2) + 1, rand.nextInt(COLS - 2) + 1 };
     }
 
-    private Stack<Cell> solveMaze(){
-        
-        while (!coordinates.isEmpty()){
+    private void resetCells(){
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLS; col++) {
+                maze[row][col].setVisited(false);
+                maze[row][col].setDistance(0);
+            }
+        }
+        path = null;
+    }
 
-            Cell current = coordinates.pop();
+    /* Breadth-first search using queue: guarantees the shortest path */ 
+    public Stack<Cell> solveMazeQueue() {
 
-            if (current.getCoordinates()[0] == end[0] && current.getCoordinates()[1] == end[1]){
-                System.out.println("Solved.");
-                return backtrack();
+        resetCells();
+
+        parent = new Cell[ROWS][COLS];
+        Queue<Cell> queue = new LinkedList<>();
+
+        Cell startCell = maze[start[0]][start[1]];
+        startCell.setVisited(true);
+        startCell.setDistance(0);
+        queue.add(startCell);
+
+        int[][] directions = { {-1, 0}, {0, 1}, {1, 0}, {0, -1} }; // N, E, S, W
+
+        while (!queue.isEmpty()) {
+            Cell current = queue.poll();
+            int row = current.getCoordinates()[0];
+            int col = current.getCoordinates()[1];
+
+            if (row == end[0] && col == end[1]) {
+                System.out.println("Solved in " + current.getDistance() + " steps.");
+                return path = backtrack();
             }
 
-            current.setVisited(true);
-            distance++;
+            for (int[] dir : directions) {
+                int nextRow = row + dir[0], nextCol = col + dir[1];
+                Cell next = maze[nextRow][nextCol];
 
-            int[] cellCords = current.getCoordinates();
-
-            Cell north = maze[cellCords[0] - 1][cellCords[1]];
-            Cell east = maze[cellCords[0]][cellCords[1] + 1];
-            Cell south = maze[cellCords[0]][cellCords[1] + 1];
-            Cell west = maze[cellCords[0]][cellCords[1] - 1];
-
-            if (!north.isWall() && !north.wasVisited()){
-
-                if(north.getCoordinates()[0] == end[0] && north.getCoordinates()[1] == end[1]){
-                    System.out.println("Solved");
-                    return backtrack();
+                if (!next.isWall() && !next.wasVisited()) {
+                    next.setVisited(true);          
+                    next.setDistance(current.getDistance() + 1);
+                    parent[nextRow][nextCol] = current;
+                    queue.add(next);
                 }
-
-                coordinates.push(north);
-                System.out.println("North: " + north.getCoordinates()[0] + ", " + north.getCoordinates()[1]);
-                north.setDistance(distance);
             }
-
-            if (!east.isWall() && !east.wasVisited()){
-
-                if(east.getCoordinates()[0] == end[0] && east.getCoordinates()[1] == end[1]){
-                    System.out.println("Solved");
-                    return backtrack();
-                }
-
-                coordinates.push(east);
-                System.out.println("East: " + east.getCoordinates()[0] + ", " + east.getCoordinates()[1]);
-                east.setDistance(distance);
-            }
-
-            if (!south.isWall() && !south.wasVisited()){
-
-                if(south.getCoordinates()[0] == end[0] && south.getCoordinates()[1] == end[1]){
-                    System.out.println("Solved");
-                    return backtrack();
-                }
-
-                coordinates.push(south);
-                System.out.println("South: " + south.getCoordinates()[0] + ", " + south.getCoordinates()[1]);
-                south.setDistance(distance);
-            }
-
-            if (!west.isWall() && !west.wasVisited()){
-
-                if(west.getCoordinates()[0] == end[0] && west.getCoordinates()[1] == end[1]){
-                    System.out.println("Solved");
-                    return backtrack();
-                }
-
-                coordinates.push(west);
-                System.out.println("West: " + west.getCoordinates()[0] + ", " + west.getCoordinates()[1]);
-                west.setDistance(distance);
-            }
-
-            System.out.println(coordinates);
         }
 
+        System.out.println("No path exists.");
         return new Stack<>();
     }
 
-    private Stack<Cell> backtrack(){
+    /* Depth-first search using stack */ 
+    public Stack<Cell> solveMazeStack() {
 
-        Stack<Cell> coords = new Stack<>();
-        Cell current = maze[end[0]][end[1]];
-        coords.push(current);
+        resetCells();
+        
+        parent = new Cell[ROWS][COLS];
+        Stack<Cell> stack = new Stack<>();
 
-        while(current.getCoordinates()[0] != start[0] && current.getCoordinates()[1] != start[1]){
+        Cell startCell = maze[start[0]][start[1]];
+        startCell.setVisited(true);
+        startCell.setDistance(0);
+        stack.push(startCell);
 
-            int[] cellCords = current.getCoordinates();
+        int[][] directions = { {-1, 0}, {0, 1}, {1, 0}, {0, -1} };
 
-            Cell north = maze[cellCords[0] - 1][cellCords[1]];
-            Cell east = maze[cellCords[0]][cellCords[1] + 1];
-            Cell south = maze[cellCords[0]][cellCords[1] - 1];
-            Cell west = maze[cellCords[0]][cellCords[1] - 1];
+        while (!stack.isEmpty()) {
+            Cell current = stack.pop();
+            int row = current.getCoordinates()[0];
+            int col = current.getCoordinates()[1];
 
-            Cell lowest = null;
-            lowest.setDistance(0);
-
-            if (lowest.getDistance() > north.getDistance() && !north.isWall()){
-                lowest = north;
+            if (row == end[0] && col == end[1]) {
+                System.out.println("Solved in " + current.getDistance() + " steps.");
+                return path = backtrack();
             }
 
-            if (lowest.getDistance() > east.getDistance() && !east.isWall()){
-                lowest = east;
-            }
+            for (int[] dir : directions) {
+                int nextRow = row + dir[0], nextCol = col + dir[1];
+                Cell next = maze[nextRow][nextCol]; 
 
-            if (lowest.getDistance() > south.getDistance() && !south.isWall()){
-                lowest = south;
+                if (!next.isWall() && !next.wasVisited()) {
+                    next.setVisited(true);          
+                    next.setDistance(current.getDistance() + 1);
+                    parent[nextRow][nextCol] = current;
+                    stack.push(next);
+                }
             }
-
-            if (lowest.getDistance() > west.getDistance() && !west.isWall()){
-                lowest = west;
-            }
-
-            coords.push(lowest);
-            current = coords.peek();
         }
 
-        return coords;
+        System.out.println("No path exists.");
+        return new Stack<>();
     }
 
-    @Override 
-    public String toString(){
+    /* Returns the path the "Robot" took to complete the maze */
+    private Stack<Cell> backtrack() {
+        Stack<Cell> result = new Stack<>();
+        Cell current = maze[end[0]][end[1]];
+        while (current != null) {
+            result.push(current);
+            int[] rc = current.getCoordinates();
+            current = parent[rc[0]][rc[1]];
+        }
+        return result;
+    }
 
+    @Override
+    public String toString() {
         String output = "";
-        for (int row = 0; row < maze.length; row++) {
-            for (int col = 0; col < maze[0].length; col++) {
-            
-                if (start[0] == row && start[1] == col){
-                    output += "S";
-                }
-                else if (end[0] == row && end[1] == col){
-                    output += "E";
-                }
-                else if (maze[row][col].isWall()) {
-                    output += "W";
-                }
-                else {
-                    output += "X";
-                }
+
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLS; col++) {
+                Cell cell = maze[row][col];
+
+                if (row == start[0] && col == start[1])  
+                    output += GREEN + "S ";
+                else if (row == end[0] && col == end[1]) 
+                    output += RED + "E ";
+                else if (cell.isWall())                  
+                    output += GRAY + "█ ";
+                else if (path != null && path.contains(cell))          
+                    output += YELLOW + "* ";
+                else                                     
+                    output += ". ";
+
+                output += RESET;
             }
             output += '\n';
         }
-
         return output;
     }
 }

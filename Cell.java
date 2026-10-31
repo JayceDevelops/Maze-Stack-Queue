@@ -22,12 +22,12 @@ public class Cell {
     }
 
     public final void setVisited(boolean visit){
-        this.visited = true;
+        this.visited = visit;
     }
 
     /**
      * 
-     * @returns a Set type, that contains the coordinates the cell is located at
+     * @returns a Int Array type, that contains the coordinates the cell is located at
      */
     public int[] getCoordinates(){
         return new int[] {this.row, this.column};
@@ -47,10 +47,5 @@ public class Cell {
 
     public boolean wasVisited() {
         return this.visited;
-    }
-
-    @Override 
-    public String toString(){
-        return String.format("Coordinates: (%d, %d) | From Start: %d | Wall: %B", this.row, this.column, this.distance, this.wall);
     }
 }
