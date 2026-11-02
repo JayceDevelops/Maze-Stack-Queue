@@ -9,12 +9,13 @@ public class Maze {
     private static final String YELLOW = "\u001B[33m";
     private static final String GRAY   = "\u001B[90m";
 
-    private final int ROWS = 25;
-    private final int COLS = 25;
+    private final int ROWS = 30;
+    private final int COLS = 30;
+
     private final Cell[][] maze;
     private int[] start, end;
-    private Cell[][] parent;
     private Stack<Cell> path;
+    int[][] DIRECTIONS = { {-1, 0}, {0, 1}, {1, 0}, {0, -1} };
 
     public Maze(String type) {
         start = generateCoordinates();
@@ -69,15 +70,12 @@ public class Maze {
 
         resetCells();
 
-        parent = new Cell[ROWS][COLS];
         Queue<Cell> queue = new LinkedList<>();
 
         Cell startCell = maze[start[0]][start[1]];
         startCell.setVisited(true);
         startCell.setDistance(0);
         queue.add(startCell);
-
-        int[][] directions = { {-1, 0}, {0, 1}, {1, 0}, {0, -1} }; // N, E, S, W
 
         while (!queue.isEmpty()) {
             Cell current = queue.poll();
@@ -89,14 +87,13 @@ public class Maze {
                 return path = backtrack();
             }
 
-            for (int[] dir : directions) {
+            for (int[] dir : DIRECTIONS) {
                 int nextRow = row + dir[0], nextCol = col + dir[1];
                 Cell next = maze[nextRow][nextCol];
 
                 if (!next.isWall() && !next.wasVisited()) {
                     next.setVisited(true);          
                     next.setDistance(current.getDistance() + 1);
-                    parent[nextRow][nextCol] = current;
                     queue.add(next);
                 }
             }
@@ -111,15 +108,12 @@ public class Maze {
 
         resetCells();
         
-        parent = new Cell[ROWS][COLS];
         Stack<Cell> stack = new Stack<>();
 
         Cell startCell = maze[start[0]][start[1]];
         startCell.setVisited(true);
         startCell.setDistance(0);
         stack.push(startCell);
-
-        int[][] directions = { {-1, 0}, {0, 1}, {1, 0}, {0, -1} };
 
         while (!stack.isEmpty()) {
             Cell current = stack.pop();
@@ -131,14 +125,13 @@ public class Maze {
                 return path = backtrack();
             }
 
-            for (int[] dir : directions) {
+            for (int[] dir : DIRECTIONS) {
                 int nextRow = row + dir[0], nextCol = col + dir[1];
                 Cell next = maze[nextRow][nextCol]; 
 
                 if (!next.isWall() && !next.wasVisited()) {
                     next.setVisited(true);          
                     next.setDistance(current.getDistance() + 1);
-                    parent[nextRow][nextCol] = current;
                     stack.push(next);
                 }
             }
@@ -149,13 +142,28 @@ public class Maze {
     }
 
     /* Returns the path the "Robot" took to complete the maze */
+    
+
+    /* Walks back from the end to the start by following decreasing distances */
     private Stack<Cell> backtrack() {
         Stack<Cell> result = new Stack<>();
+
         Cell current = maze[end[0]][end[1]];
-        while (current != null) {
-            result.push(current);
-            int[] rc = current.getCoordinates();
-            current = parent[rc[0]][rc[1]];
+        result.push(current);
+
+        while (current.getDistance() > 0) {
+            int row = current.getCoordinates()[0];
+            int col = current.getCoordinates()[1];
+
+            for (int[] dir : DIRECTIONS) {
+                Cell next = maze[row + dir[0]][col + dir[1]];
+
+                if (!next.isWall() && next.wasVisited() && next.getDistance() == current.getDistance() - 1) {
+                    current = next;
+                    result.push(current);
+                    break;   
+                }
+            }
         }
         return result;
     }
