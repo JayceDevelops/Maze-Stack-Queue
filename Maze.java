@@ -141,9 +141,6 @@ public class Maze {
         return new Stack<>();
     }
 
-    /* Returns the path the "Robot" took to complete the maze */
-    
-
     /* Walks back from the end to the start by following decreasing distances */
     private Stack<Cell> backtrack() {
         Stack<Cell> result = new Stack<>();
